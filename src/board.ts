@@ -82,6 +82,10 @@ class Tile {
       graphics.lineTo(x * sideLength + 3, y * sideLength + 3);
       graphics.lineTo((x + 1) * sideLength - 1, y * sideLength + 3);
       graphics.stroke({ width: 4, color: 0xffffff });
+      graphics.moveTo(x * sideLength + 3, (y + 1) * sideLength - 1);
+      graphics.lineTo((x + 1) * sideLength - 1, (y + 1) * sideLength - 1);
+      graphics.lineTo((x + 1) * sideLength - 1, y * sideLength + 3);
+      graphics.stroke({ width: 4, color: 0xaaaaaa });
 
       graphics.eventMode = "static";
       graphics.on("pointerdown", () => this.processClick());
