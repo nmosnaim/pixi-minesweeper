@@ -1,5 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getTileValueColor } from "./color";
+import { BOARD_DEFAULT_SIDE_LENGTH } from "./consts";
 import { shuffle } from "./utils";
 
 class Tile {
@@ -66,8 +67,6 @@ type BoardOptions = {
   sideLength?: number;
 };
 
-const DEFAULT_SIDE_LENGTH = 24;
-
 export class Board {
   width: number;
   height: number;
@@ -82,7 +81,7 @@ export class Board {
     this.width = width;
     this.height = height;
 
-    this.sideLength = options.sideLength ?? DEFAULT_SIDE_LENGTH;
+    this.sideLength = options.sideLength ?? BOARD_DEFAULT_SIDE_LENGTH;
 
     this.container = new Container();
 
