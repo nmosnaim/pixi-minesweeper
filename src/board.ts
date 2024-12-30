@@ -82,7 +82,7 @@ export class Board {
     this.width = width;
     this.height = height;
 
-    this.sideLength = options.sideLength || DEFAULT_SIDE_LENGTH;
+    this.sideLength = options.sideLength ?? DEFAULT_SIDE_LENGTH;
 
     this.container = new Container();
 
@@ -100,7 +100,7 @@ export class Board {
     const candidates = Array.from(Array(this.totalTiles).keys()); // [1, 2, 3, ... totalTiles]
     shuffle(candidates);
     candidates.forEach((candidateIndex, i) => {
-      this.tiles[candidateIndex].hasBomb = i <= bombs;
+      this.tiles[candidateIndex].hasBomb = i < bombs;
     });
     candidates.forEach((candidateIndex) => {
       this.tiles[candidateIndex].computeValue();
