@@ -65,16 +65,33 @@ class Tile {
     }
   }
 
+  magicOpenNeighbors() {
+    const flaggedNeighbors = this.neighbors.filter((tile) => tile.isFlagged);
+    if (flaggedNeighbors.length === this.value)
+      this.neighbors.filter((tile) => !tile.isOpen).forEach((tile) => tile.open());
+  }
+
+  flag() {
+    this.isFlagged = !this.isFlagged;
+    this.render();
+  }
+
+  magicFlagNeighbors() {
+    const unopenedNeighbors = this.neighbors.filter((tile) => !tile.isOpen);
+    if (unopenedNeighbors.length === this.value)
+      unopenedNeighbors.filter((tile) => !tile.isFlagged).forEach((tile) => tile.flag());
+  }
+
   processClick() {
     console.debug(`Clicked tile ${this.index}`);
+    if (this.isOpen) return this.magicOpenNeighbors();
     this.open();
   }
 
   processRightClick() {
     console.debug(`Right-clicked tile ${this.index}`);
-    if (this.isOpen) return;
-    this.isFlagged = !this.isFlagged;
-    this.render();
+    if (this.isOpen) return this.magicFlagNeighbors();
+    this.flag();
   }
 
   // coordinate boundary
@@ -118,9 +135,6 @@ class Tile {
 
     if (!this.isOpen) {
       this.renderDepth(graphics);
-      graphics.eventMode = "static";
-      graphics.on("mousedown", () => this.processClick());
-      graphics.on("rightdown", () => this.processRightClick());
     }
 
     if (this.isFlagged) {
@@ -136,8 +150,11 @@ class Tile {
         fill: this.tileColor,
       }),
     });
-
     graphics.addChild(text);
+
+    graphics.eventMode = "static";
+    graphics.on("mousedown", () => this.processClick());
+    graphics.on("rightdown", () => this.processRightClick());
   }
 
   computeValue() {
