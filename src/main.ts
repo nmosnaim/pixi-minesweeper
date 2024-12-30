@@ -33,7 +33,7 @@ async function main() {
   setInputValue("main-menu-bombs-input", GAME_DEFAULT_BOMBS);
 
   const game = new Game(app);
-  game.mainMenu();
+  if (!game.restoreSavedGame()) game.mainMenu();
 }
 
 main();

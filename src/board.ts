@@ -2,6 +2,7 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getTileValueColor } from "./color";
 import { BOARD_DEFAULT_SIDE_LENGTH } from "./consts";
 import { Game } from "./game";
+import { saveBoardData } from "./storage";
 import { shuffle } from "./utils";
 
 class Tile {
@@ -59,13 +60,19 @@ class Tile {
   }
 
   computeValue() {
-    this.value = this.board.getNearBombs(this.index);
+    if (!this.hasBomb) this.value = this.board.getNearBombs(this.index);
   }
 }
 
 type BoardOptions = {
   topLeft?: number[];
   sideLength?: number;
+};
+
+export type SerializedBoard = {
+  width: number;
+  height: number;
+  bombs: number[];
 };
 
 export class Board {
@@ -94,6 +101,15 @@ export class Board {
     }
   }
 
+  static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {
+    const board = new Board(game, boardData.width, boardData.height, options);
+    for (let i = 0; i < board.totalTiles; i++) {
+      board.tiles[i].hasBomb = boardData.bombs[i] === 1;
+    }
+    board.plantPostActions();
+    return board;
+  }
+
   setup() {
     (<HTMLElement>document.getElementById("game-ui")).style["display"] = "";
     (<HTMLInputElement>document.getElementById("game-giveup-button")).addEventListener(
@@ -113,10 +129,15 @@ export class Board {
     candidates.forEach((candidateIndex, i) => {
       this.tiles[candidateIndex].hasBomb = i < bombs;
     });
-    candidates.forEach((candidateIndex) => {
-      this.tiles[candidateIndex].computeValue();
+    this.plantPostActions();
+  }
+
+  private plantPostActions() {
+    this.tiles.forEach((tile) => {
+      tile.computeValue();
     });
     this.render();
+    saveBoardData(this.serializedData);
   }
 
   render() {
@@ -154,5 +175,13 @@ export class Board {
     if (hasRight && hasBelow) bombs += +this.tiles[this.coordinatesToIndex(x + 1, y + 1)].hasBomb;
 
     return bombs;
+  }
+
+  get serializedData(): SerializedBoard {
+    return {
+      width: this.width,
+      height: this.height,
+      bombs: this.tiles.map((tile) => +tile.hasBomb),
+    };
   }
 }
