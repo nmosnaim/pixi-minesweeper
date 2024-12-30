@@ -1,22 +1,13 @@
-import { Input } from "@pixi/ui";
 import { Application, Container, Text, TextStyle } from "pixi.js";
 import { Game } from "./game";
-
-enum InputId {
-  WIDTH,
-  HEIGHT,
-  BOMBS,
-}
 
 export class MainMenu {
   game: Game;
   app: Application;
-  inputs: { [id: number]: Input };
 
   constructor(game: Game) {
     this.game = game;
     this.app = game.app;
-    this.inputs = {};
   }
 
   setup() {
