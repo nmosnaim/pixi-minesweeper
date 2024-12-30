@@ -25,7 +25,7 @@ class Tile {
 
     this.hasBomb = false;
     this.isOpen = false;
-    this.isFlagged = true;
+    this.isFlagged = false;
 
     this.value = 0;
     this.neighbors = [];
@@ -67,7 +67,6 @@ class Tile {
 
   processClick() {
     console.debug(`Clicked tile ${this.index}`);
-    console.debug(this.graphics?.position);
     this.open();
   }
 
@@ -75,22 +74,31 @@ class Tile {
     console.debug(`Right-clicked tile ${this.index}`);
     if (this.isOpen) return;
     this.isFlagged = !this.isFlagged;
+    this.render();
+  }
+
+  // coordinate boundary
+  get cb(): number {
+    return this.board.sideLength / 2;
   }
 
   renderDepth(graphics: Graphics) {
-    const factor = this.board.sideLength / 2;
-    graphics.moveTo(-factor + 3, factor - 3);
-    graphics.lineTo(-factor + 3, -factor + 3);
-    graphics.lineTo(factor - 3, -factor + 3);
+    graphics.moveTo(-this.cb + 3, this.cb - 3);
+    graphics.lineTo(-this.cb + 3, -this.cb + 3);
+    graphics.lineTo(this.cb - 3, -this.cb + 3);
     graphics.stroke({ width: 4, color: 0xffffff });
-    graphics.moveTo(-factor + 3, factor - 3);
-    graphics.lineTo(factor - 3, factor - 3);
-    graphics.lineTo(factor - 3, -factor + 3);
+    graphics.moveTo(-this.cb + 3, this.cb - 3);
+    graphics.lineTo(this.cb - 3, this.cb - 3);
+    graphics.lineTo(this.cb - 3, -this.cb + 3);
     graphics.stroke({ width: 4, color: 0xaaaaaa });
   }
 
   renderFlag(graphics: Graphics) {
-    //
+    graphics.poly([0, 0, 0, -this.cb * 0.5, -this.cb * 0.4, -this.cb * 0.2], true);
+    graphics.fill({ color: "red" });
+    graphics.moveTo(0, -this.cb * 0.5);
+    graphics.lineTo(0, this.cb * 0.5);
+    graphics.stroke({ width: 1, color: 0x000000 });
   }
 
   render() {

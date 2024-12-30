@@ -6,4 +6,4 @@ export const GAME_DEFAULT_WIDTH = 30;
 export const GAME_DEFAULT_HEIGHT = 20;
 export const GAME_DEFAULT_BOMBS = 120;
 
-export const BOARD_DEFAULT_SIDE_LENGTH = 24;
+export const BOARD_DEFAULT_SIDE_LENGTH = 26;
