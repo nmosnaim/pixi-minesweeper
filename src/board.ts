@@ -84,7 +84,7 @@ export class Board {
 
   container: Container;
 
-  private tiles: Tile[];
+  private readonly tiles: Tile[];
 
   constructor(game: Game, width: number, height: number, options: BoardOptions = {}) {
     this.game = game;
