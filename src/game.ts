@@ -1,7 +1,7 @@
 import { Application } from "pixi.js";
 import { Board } from "./board";
 import { MainMenu } from "./mainMenu";
-import { loadBoardData } from "./storage";
+import { deleteBoardData, loadBoardData } from "./storage";
 
 enum GameView {
   UNINITIALIZED,
@@ -56,6 +56,7 @@ export class Game {
     this.changeView(GameView.MAIN_MENU);
     const mainMenu = new MainMenu(this);
     mainMenu.setup();
+    deleteBoardData();
   }
 
   startGame(width: number, height: number, bombs: number) {
