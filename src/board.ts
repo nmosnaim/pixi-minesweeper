@@ -1,6 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getTileValueColor } from "./color";
 import { BOARD_DEFAULT_SIDE_LENGTH } from "./consts";
+import { Game } from "./game";
 import { shuffle } from "./utils";
 
 class Tile {
@@ -68,6 +69,7 @@ type BoardOptions = {
 };
 
 export class Board {
+  game: Game;
   width: number;
   height: number;
 
@@ -77,7 +79,8 @@ export class Board {
 
   private tiles: Tile[];
 
-  constructor(width: number, height: number, options: BoardOptions = {}) {
+  constructor(game: Game, width: number, height: number, options: BoardOptions = {}) {
+    this.game = game;
     this.width = width;
     this.height = height;
 
@@ -89,6 +92,15 @@ export class Board {
     for (let i = 0; i < this.totalTiles; i++) {
       this.tiles.push(new Tile(this, i));
     }
+  }
+
+  setup() {
+    (<HTMLElement>document.getElementById("game-ui")).style["display"] = "";
+    (<HTMLInputElement>document.getElementById("game-giveup-button")).addEventListener(
+      "click",
+      () => this.game.mainMenu(),
+      { once: true }
+    );
   }
 
   get totalTiles() {

@@ -11,10 +11,7 @@ export class MainMenu {
   }
 
   setup() {
-    const mainMenu = document.getElementById("main-menu-container");
-    if (mainMenu) {
-      mainMenu.style["display"] = "";
-    }
+    (<HTMLElement>document.getElementById("main-menu-container")).style["display"] = "";
 
     const container = new Container();
     this.app.stage.addChild(container);
@@ -34,7 +31,7 @@ export class MainMenu {
     container.addChild(title);
 
     const startButton = <HTMLButtonElement>document.getElementById("main-menu-start-button");
-    startButton.addEventListener("click", () => this.prepareGameStart());
+    startButton.addEventListener("click", () => this.prepareGameStart(), { once: true });
   }
 
   prepareGameStart() {
