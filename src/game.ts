@@ -23,6 +23,10 @@ export class Game {
     while (this.app.stage.children[0]) {
       this.app.stage.removeChild(this.app.stage.children[0]);
     }
+    const mainMenu = document.getElementById("main-menu-container");
+    if (mainMenu) {
+      mainMenu.style["display"] = "none";
+    }
   }
 
   private changeView(newView: GameView) {

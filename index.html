@@ -3,6 +3,54 @@
   <head>
     <meta charset="utf-8" />
     <title>Minesweeper</title>
+    <link href="src/output.css" rel="stylesheet" />
     <script src="src/main.ts" type="module"></script>
   </head>
+  <body>
+    <div id="main-div" class="border" style="position: relative">
+      <div
+        id="main-menu-container"
+        class="flex flex-col justify-center"
+        style="position: absolute; width: 100%; height: 100%"
+      >
+        <form class="max-w-sm mx-auto mt-2">
+          <label for="number-input" class="block font-medium">Width</label>
+          <input
+            type="number"
+            id="main-menu-width-input"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+            min="10"
+            max="50"
+          />
+        </form>
+        <form class="max-w-sm mx-auto mt-2">
+          <label for="number-input" class="block font-medium">Height</label>
+          <input
+            type="number"
+            id="main-menu-height-input"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+            min="10"
+            max="50"
+          />
+        </form>
+        <form class="max-w-sm mx-auto mt-2">
+          <label for="number-input" class="block font-medium">Bombs</label>
+          <input
+            type="number"
+            id="main-menu-bombs-input"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+            min="10"
+            max="2500"
+          />
+        </form>
+        <button
+          type="button"
+          id="main-menu-start-button"
+          class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mt-10 mx-auto"
+        >
+          Start
+        </button>
+      </div>
+    </div>
+  </body>
 </html>
