@@ -12,6 +12,8 @@ class Tile {
   isOpen: boolean;
   value: number;
 
+  neighbors: Tile[];
+
   graphics: Graphics | null;
 
   constructor(board: Board, index: number) {
@@ -20,6 +22,7 @@ class Tile {
     this.hasBomb = false;
     this.isOpen = false;
     this.value = 0;
+    this.neighbors = [];
     this.graphics = null;
     this.render();
   }
@@ -43,10 +46,22 @@ class Tile {
     return getTileValueColor(this.value);
   }
 
-  processClick() {
-    console.debug(`Clicked tile ${this.index}`);
+  open() {
+    if (this.isOpen) return;
     this.isOpen = true;
     this.render();
+    if (this.hasBomb) {
+      // TODO: handle game end
+      return;
+    }
+    if (this.value === 0) {
+      this.neighbors.forEach((tile) => tile.open());
+    }
+  }
+
+  processClick() {
+    console.debug(`Clicked tile ${this.index}`);
+    this.open();
   }
 
   render() {
@@ -88,7 +103,7 @@ class Tile {
   }
 
   computeValue() {
-    if (!this.hasBomb) this.value = this.board.getNearBombs(this.index);
+    if (!this.hasBomb) this.value = this.neighbors.reduce((sum, tile) => sum + +tile.hasBomb, 0);
   }
 }
 
@@ -127,6 +142,7 @@ export class Board {
     for (let i = 0; i < this.totalTiles; i++) {
       this.tiles.push(new Tile(this, i));
     }
+    this.tiles.forEach((tile) => (tile.neighbors = this.getNeighbors(tile.index)));
   }
 
   static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {
@@ -182,27 +198,28 @@ export class Board {
     return y * this.width + x;
   }
 
-  getNearBombs(index: number): number {
+  getNeighbors(index: number): Tile[] {
     const [x, y] = this.indexToCoordinates(index);
     const hasLeft = x > 0;
     const hasAbove = y > 0;
     const hasRight = x < this.width - 1;
     const hasBelow = y < this.height - 1;
-    let bombs = 0;
+
+    const result: Tile[] = [];
 
     // cardinal
-    if (hasLeft) bombs += +this.tiles[this.coordinatesToIndex(x - 1, y)].hasBomb;
-    if (hasAbove) bombs += +this.tiles[this.coordinatesToIndex(x, y - 1)].hasBomb;
-    if (hasRight) bombs += +this.tiles[this.coordinatesToIndex(x + 1, y)].hasBomb;
-    if (hasBelow) bombs += +this.tiles[this.coordinatesToIndex(x, y + 1)].hasBomb;
+    if (hasLeft) result.push(this.tiles[this.coordinatesToIndex(x - 1, y)]);
+    if (hasAbove) result.push(this.tiles[this.coordinatesToIndex(x, y - 1)]);
+    if (hasRight) result.push(this.tiles[this.coordinatesToIndex(x + 1, y)]);
+    if (hasBelow) result.push(this.tiles[this.coordinatesToIndex(x, y + 1)]);
 
     // corners
-    if (hasLeft && hasAbove) bombs += +this.tiles[this.coordinatesToIndex(x - 1, y - 1)].hasBomb;
-    if (hasLeft && hasBelow) bombs += +this.tiles[this.coordinatesToIndex(x - 1, y + 1)].hasBomb;
-    if (hasRight && hasAbove) bombs += +this.tiles[this.coordinatesToIndex(x + 1, y - 1)].hasBomb;
-    if (hasRight && hasBelow) bombs += +this.tiles[this.coordinatesToIndex(x + 1, y + 1)].hasBomb;
+    if (hasLeft && hasAbove) result.push(this.tiles[this.coordinatesToIndex(x - 1, y - 1)]);
+    if (hasLeft && hasBelow) result.push(this.tiles[this.coordinatesToIndex(x - 1, y + 1)]);
+    if (hasRight && hasAbove) result.push(this.tiles[this.coordinatesToIndex(x + 1, y - 1)]);
+    if (hasRight && hasBelow) result.push(this.tiles[this.coordinatesToIndex(x + 1, y + 1)]);
 
-    return bombs;
+    return result;
   }
 
   get serializedData(): SerializedBoard {
