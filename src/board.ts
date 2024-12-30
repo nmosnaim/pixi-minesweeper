@@ -9,13 +9,18 @@ class Tile {
   board: Board;
   index: number;
   hasBomb: boolean;
+  isOpen: boolean;
   value: number;
+
+  graphics: Graphics | null;
 
   constructor(board: Board, index: number) {
     this.board = board;
     this.index = index;
     this.hasBomb = false;
+    this.isOpen = false;
     this.value = 0;
+    this.graphics = null;
     this.render();
   }
 
@@ -26,22 +31,46 @@ class Tile {
   }
 
   get text(): string {
-    if (this.hasBomb) {
-      return "*";
-    }
-    if (this.value) {
-      return `${this.value}`;
-    }
+    if (!this.isOpen) return "";
+    if (this.hasBomb) return "*";
+    if (this.value) return `${this.value}`;
     return "";
   }
 
+  get tileColor(): number {
+    if (!this.isOpen) return 0xffffff;
+    if (this.hasBomb) return 0x000000;
+    return getTileValueColor(this.value);
+  }
+
+  processClick() {
+    console.debug(`Clicked tile ${this.index}`);
+    this.isOpen = true;
+    this.render();
+  }
+
   render() {
+    if (this.graphics) {
+      this.graphics.destroy();
+    }
     const graphics = new Graphics();
+    this.graphics = graphics;
+    this.board.container.addChild(graphics);
     const [x, y] = this.coordinates;
     const sideLength = this.board.sideLength;
     graphics.rect(x * sideLength, y * sideLength, sideLength, sideLength);
     graphics.fill(0xedd7d5);
     graphics.stroke({ width: 1, color: 0x000000 });
+
+    if (!this.isOpen) {
+      graphics.moveTo(x * sideLength + 3, (y + 1) * sideLength - 1);
+      graphics.lineTo(x * sideLength + 3, y * sideLength + 3);
+      graphics.lineTo((x + 1) * sideLength - 1, y * sideLength + 3);
+      graphics.stroke({ width: 4, color: 0xffffff });
+
+      graphics.eventMode = "static";
+      graphics.on("pointerdown", () => this.processClick());
+    }
 
     const text = new Text({
       text: this.text,
@@ -49,13 +78,12 @@ class Tile {
       style: new TextStyle({
         fontSize: this.board.sideLength * 0.8,
         fontWeight: "bold",
-        fill: this.hasBomb ? 0x000000 : getTileValueColor(this.value),
+        fill: this.tileColor,
       }),
     });
     text.x = (x + 1 / 2) * sideLength;
     text.y = (y + 1 / 2) * sideLength;
 
-    this.board.container.addChild(graphics);
     graphics.addChild(text);
   }
 
