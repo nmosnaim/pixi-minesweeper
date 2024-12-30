@@ -42,7 +42,6 @@ export class Game {
       }
       this.changeView(GameView.GAME);
       this.board = Board.restore(this, boardData);
-      this.metaSetupBoard();
       this.board.setup();
       return true;
     } catch (e: any) {
@@ -64,18 +63,6 @@ export class Game {
     this.board = new Board(this, width, height);
 
     this.board.plant(bombs);
-    this.metaSetupBoard();
     this.board.setup();
-  }
-
-  private metaSetupBoard() {
-    if (!this.board) {
-      throw Error("Board is not setup");
-    }
-    this.app.stage.addChild(this.board.container);
-    this.board.container.x = this.app.screen.width / 2;
-    this.board.container.y = this.app.screen.height / 2;
-    this.board.container.pivot.x = this.board.container.width / 2;
-    this.board.container.pivot.y = this.board.container.height / 2;
   }
 }

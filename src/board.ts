@@ -8,8 +8,11 @@ import { shuffle } from "./utils";
 class Tile {
   board: Board;
   index: number;
+
   hasBomb: boolean;
   isOpen: boolean;
+  isFlagged: boolean;
+
   value: number;
 
   neighbors: Tile[];
@@ -19,8 +22,11 @@ class Tile {
   constructor(board: Board, index: number) {
     this.board = board;
     this.index = index;
+
     this.hasBomb = false;
     this.isOpen = false;
+    this.isFlagged = true;
+
     this.value = 0;
     this.neighbors = [];
     this.graphics = null;
@@ -47,7 +53,7 @@ class Tile {
   }
 
   open() {
-    if (this.isOpen) return;
+    if (this.isOpen || this.isFlagged) return;
     this.isOpen = true;
     this.render();
     if (this.hasBomb) {
@@ -61,7 +67,30 @@ class Tile {
 
   processClick() {
     console.debug(`Clicked tile ${this.index}`);
+    console.debug(this.graphics?.position);
     this.open();
+  }
+
+  processRightClick() {
+    console.debug(`Right-clicked tile ${this.index}`);
+    if (this.isOpen) return;
+    this.isFlagged = !this.isFlagged;
+  }
+
+  renderDepth(graphics: Graphics) {
+    const factor = this.board.sideLength / 2;
+    graphics.moveTo(-factor + 3, factor - 3);
+    graphics.lineTo(-factor + 3, -factor + 3);
+    graphics.lineTo(factor - 3, -factor + 3);
+    graphics.stroke({ width: 4, color: 0xffffff });
+    graphics.moveTo(-factor + 3, factor - 3);
+    graphics.lineTo(factor - 3, factor - 3);
+    graphics.lineTo(factor - 3, -factor + 3);
+    graphics.stroke({ width: 4, color: 0xaaaaaa });
+  }
+
+  renderFlag(graphics: Graphics) {
+    //
   }
 
   render() {
@@ -73,22 +102,21 @@ class Tile {
     this.board.container.addChild(graphics);
     const [x, y] = this.coordinates;
     const sideLength = this.board.sideLength;
-    graphics.rect(x * sideLength, y * sideLength, sideLength, sideLength);
+
+    graphics.position.set(x * sideLength, y * sideLength);
+    graphics.rect(-sideLength / 2, -sideLength / 2, sideLength, sideLength);
     graphics.fill(0xedd7d5);
     graphics.stroke({ width: 1, color: 0x000000 });
 
     if (!this.isOpen) {
-      graphics.moveTo(x * sideLength + 3, (y + 1) * sideLength - 1);
-      graphics.lineTo(x * sideLength + 3, y * sideLength + 3);
-      graphics.lineTo((x + 1) * sideLength - 1, y * sideLength + 3);
-      graphics.stroke({ width: 4, color: 0xffffff });
-      graphics.moveTo(x * sideLength + 3, (y + 1) * sideLength - 1);
-      graphics.lineTo((x + 1) * sideLength - 1, (y + 1) * sideLength - 1);
-      graphics.lineTo((x + 1) * sideLength - 1, y * sideLength + 3);
-      graphics.stroke({ width: 4, color: 0xaaaaaa });
-
+      this.renderDepth(graphics);
       graphics.eventMode = "static";
-      graphics.on("pointerdown", () => this.processClick());
+      graphics.on("mousedown", () => this.processClick());
+      graphics.on("rightdown", () => this.processRightClick());
+    }
+
+    if (this.isFlagged) {
+      this.renderFlag(graphics);
     }
 
     const text = new Text({
@@ -100,8 +128,6 @@ class Tile {
         fill: this.tileColor,
       }),
     });
-    text.x = (x + 1 / 2) * sideLength;
-    text.y = (y + 1 / 2) * sideLength;
 
     graphics.addChild(text);
   }
@@ -138,15 +164,21 @@ export class Board {
     this.width = width;
     this.height = height;
 
-    this.sideLength = options.sideLength ?? BOARD_DEFAULT_SIDE_LENGTH;
-
     this.container = new Container();
+    this.container.x = this.game.app.screen.width / 2;
+    this.container.y = this.game.app.screen.height / 2;
+    this.game.app.stage.addChild(this.container);
+
+    this.sideLength = options.sideLength ?? BOARD_DEFAULT_SIDE_LENGTH;
 
     this.tiles = [];
     for (let i = 0; i < this.totalTiles; i++) {
       this.tiles.push(new Tile(this, i));
     }
     this.tiles.forEach((tile) => (tile.neighbors = this.getNeighbors(tile.index)));
+
+    this.container.pivot.x = (this.sideLength * width) / 2;
+    this.container.pivot.y = (this.sideLength * height) / 2;
   }
 
   static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {

@@ -26,6 +26,9 @@ async function main() {
   mainDiv.style.width = `${APP_WIDTH}px`;
   mainDiv.style.height = `${APP_HEIGHT}px`;
   mainDiv.appendChild(app.canvas);
+  app.canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+  });
 
   // set default settings in menu
   setInputValue("main-menu-width-input", GAME_DEFAULT_WIDTH);
