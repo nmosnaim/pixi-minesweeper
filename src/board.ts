@@ -59,7 +59,7 @@ class Tile {
   open() {
     if (this.board.isFrozen || this.isOpen || this.isFlagged) return;
     this.isOpen = true;
-    this.board.tileOpened();
+    this.board.tileOpened(this.index);
     saveBoardData(this.board.serializedData);
     this.render();
     if (this.hasBomb) {
@@ -197,6 +197,8 @@ export class Board {
   isFrozen: boolean;
   totalOpened: number;
 
+  firstTileClicked: boolean;
+
   constructor(game: Game, width: number, height: number, options: BoardOptions = {}) {
     this.game = game;
     this.width = width;
@@ -221,6 +223,8 @@ export class Board {
     this.plantedBombs = 0;
     this.isFrozen = false;
     this.totalOpened = 0;
+
+    this.firstTileClicked = false;
   }
 
   static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {
@@ -234,6 +238,7 @@ export class Board {
       if (boardData.opened[i] === "1") {
         board.tiles[i].isOpen = true;
         board.totalOpened += 1;
+        board.firstTileClicked = true;
       }
     }
     board.plantPostActions();
@@ -253,13 +258,24 @@ export class Board {
     return this.width * this.height;
   }
 
-  plant(bombs: number) {
+  setBombs(bombs: number) {
+    this.plantedBombs = bombs;
+  }
+
+  plant(startingTileIndex: number) {
     const candidates = Array.from(Array(this.totalTiles).keys()); // [1, 2, 3, ... totalTiles]
     shuffle(candidates);
-    candidates.forEach((candidateIndex, i) => {
-      this.tiles[candidateIndex].hasBomb = i < bombs;
+
+    const startingTile = this.tiles[startingTileIndex];
+    const safetyTileIndexes = startingTile.neighbors.map((tile) => tile.index);
+    safetyTileIndexes.push(startingTileIndex);
+
+    let remainingBombs = this.plantedBombs;
+    candidates.forEach((candidateIndex) => {
+      if (safetyTileIndexes.includes(candidateIndex) || remainingBombs === 0) return;
+      this.tiles[candidateIndex].hasBomb = true;
+      remainingBombs -= 1;
     });
-    this.plantedBombs = bombs;
     this.plantPostActions();
   }
 
@@ -309,7 +325,9 @@ export class Board {
     return result;
   }
 
-  tileOpened() {
+  tileOpened(openedTileIndex: number) {
+    if (!this.firstTileClicked) this.plant(openedTileIndex);
+    this.firstTileClicked = true;
     this.totalOpened += 1;
     if (this.totalOpened === this.totalTiles - this.plantedBombs) {
       this.endGame(GameResult.VICTORY);

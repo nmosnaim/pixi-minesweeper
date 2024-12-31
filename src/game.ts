@@ -62,7 +62,7 @@ export class Game {
     this.changeView(GameView.GAME);
     this.board = new Board(this, width, height);
 
-    this.board.plant(bombs);
+    this.board.setBombs(bombs);
     this.board.setup();
   }
 }
