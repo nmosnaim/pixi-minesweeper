@@ -170,7 +170,7 @@ type BoardOptions = {
 export type SerializedBoard = {
   width: number;
   height: number;
-  bombs: number[];
+  bombs: string;
 };
 
 export class Board {
@@ -209,7 +209,7 @@ export class Board {
   static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {
     const board = new Board(game, boardData.width, boardData.height, options);
     for (let i = 0; i < board.totalTiles; i++) {
-      board.tiles[i].hasBomb = boardData.bombs[i] === 1;
+      board.tiles[i].hasBomb = boardData.bombs[i] === "1";
     }
     board.plantPostActions();
     return board;
@@ -287,7 +287,7 @@ export class Board {
     return {
       width: this.width,
       height: this.height,
-      bombs: this.tiles.map((tile) => +tile.hasBomb),
+      bombs: this.tiles.reduce((sum, tile) => sum + (tile.hasBomb ? "1" : "0"), ""),
     };
   }
 }
