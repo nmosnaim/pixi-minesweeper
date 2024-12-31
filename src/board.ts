@@ -2,9 +2,13 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getTileValueColor } from "./color";
 import { BOARD_DEFAULT_SIDE_LENGTH } from "./consts";
 import { Game } from "./game";
-import { saveBoardData } from "./storage";
+import { deleteBoardData, saveBoardData } from "./storage";
 import { arrayToBinary, shuffle } from "./utils";
 
+enum GameResult {
+  GAME_OVER,
+  VICTORY,
+}
 class Tile {
   board: Board;
   index: number;
@@ -53,13 +57,13 @@ class Tile {
   }
 
   open() {
-    if (this.isOpen || this.isFlagged) return;
+    if (this.board.isFrozen || this.isOpen || this.isFlagged) return;
     this.isOpen = true;
+    this.board.tileOpened();
     saveBoardData(this.board.serializedData);
     this.render();
     if (this.hasBomb) {
-      // TODO: handle game end
-      return;
+      return this.board.endGame(GameResult.GAME_OVER);
     }
     if (this.value === 0) {
       this.neighbors.forEach((tile) => tile.open());
@@ -73,6 +77,7 @@ class Tile {
   }
 
   flag() {
+    if (this.board.isFrozen) return;
     this.isFlagged = !this.isFlagged;
     saveBoardData(this.board.serializedData);
     this.render();
@@ -132,7 +137,7 @@ class Tile {
 
     graphics.position.set(x * sideLength, y * sideLength);
     graphics.rect(-sideLength / 2, -sideLength / 2, sideLength, sideLength);
-    graphics.fill(0xedd7d5);
+    graphics.fill(this.hasBomb && this.isOpen ? 0xd40019 : 0xedd7d5);
     graphics.stroke({ width: 1, color: 0x000000 });
 
     if (!this.isOpen) {
@@ -188,6 +193,10 @@ export class Board {
 
   private readonly tiles: Tile[];
 
+  plantedBombs: number;
+  isFrozen: boolean;
+  totalOpened: number;
+
   constructor(game: Game, width: number, height: number, options: BoardOptions = {}) {
     this.game = game;
     this.width = width;
@@ -208,14 +217,24 @@ export class Board {
 
     this.container.pivot.x = (this.sideLength * width) / 2;
     this.container.pivot.y = (this.sideLength * height) / 2;
+
+    this.plantedBombs = 0;
+    this.isFrozen = false;
+    this.totalOpened = 0;
   }
 
   static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {
     const board = new Board(game, boardData.width, boardData.height, options);
     for (let i = 0; i < board.totalTiles; i++) {
-      board.tiles[i].hasBomb = boardData.bombs[i] === "1";
-      board.tiles[i].isOpen = boardData.opened[i] === "1";
       board.tiles[i].isFlagged = boardData.flags[i] === "1";
+      if (boardData.bombs[i] === "1") {
+        board.tiles[i].hasBomb = true;
+        board.plantedBombs += 1;
+      }
+      if (boardData.opened[i] === "1") {
+        board.tiles[i].isOpen = true;
+        board.totalOpened += 1;
+      }
     }
     board.plantPostActions();
     return board;
@@ -240,6 +259,7 @@ export class Board {
     candidates.forEach((candidateIndex, i) => {
       this.tiles[candidateIndex].hasBomb = i < bombs;
     });
+    this.plantedBombs = bombs;
     this.plantPostActions();
   }
 
@@ -287,6 +307,32 @@ export class Board {
     if (hasRight && hasBelow) result.push(this.tiles[this.coordinatesToIndex(x + 1, y + 1)]);
 
     return result;
+  }
+
+  tileOpened() {
+    this.totalOpened += 1;
+    if (this.totalOpened === this.totalTiles - this.plantedBombs) {
+      this.endGame(GameResult.VICTORY);
+    }
+  }
+
+  endGame(result: GameResult) {
+    this.isFrozen = true;
+    deleteBoardData();
+
+    const titleStyle = new TextStyle({
+      fill: 0xffffff,
+      stroke: { color: result === GameResult.VICTORY ? 0x004620 : 0xd40019, width: 12, join: "round" },
+      fontSize: 60,
+    });
+    const title = new Text({
+      text: result === GameResult.VICTORY ? "VICTORY" : "GAME OVER",
+      anchor: 0.5,
+      style: titleStyle,
+    });
+    title.x = this.container.width / 2;
+    title.y = -50;
+    this.container.addChild(title);
   }
 
   get serializedData(): SerializedBoard {

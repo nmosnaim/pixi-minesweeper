@@ -17,8 +17,8 @@ export class MainMenu {
     this.app.stage.addChild(container);
 
     const titleStyle = new TextStyle({
-      fill: "#ffffff",
-      stroke: { color: "#004620", width: 12, join: "round" },
+      fill: 0xffffff,
+      stroke: { color: 0x004620, width: 12, join: "round" },
       fontSize: 60,
     });
     const title = new Text({
