@@ -11,3 +11,7 @@ export function shuffle(array: any[]) {
     [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
   }
 }
+
+export function arrayToBinary(data: boolean[]) {
+  return data.reduce((sum, datapoint) => sum + (datapoint ? "1" : "0"), "");
+}

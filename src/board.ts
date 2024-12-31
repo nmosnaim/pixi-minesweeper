@@ -3,7 +3,7 @@ import { getTileValueColor } from "./color";
 import { BOARD_DEFAULT_SIDE_LENGTH } from "./consts";
 import { Game } from "./game";
 import { saveBoardData } from "./storage";
-import { shuffle } from "./utils";
+import { arrayToBinary, shuffle } from "./utils";
 
 class Tile {
   board: Board;
@@ -55,6 +55,7 @@ class Tile {
   open() {
     if (this.isOpen || this.isFlagged) return;
     this.isOpen = true;
+    saveBoardData(this.board.serializedData);
     this.render();
     if (this.hasBomb) {
       // TODO: handle game end
@@ -73,6 +74,7 @@ class Tile {
 
   flag() {
     this.isFlagged = !this.isFlagged;
+    saveBoardData(this.board.serializedData);
     this.render();
   }
 
@@ -171,6 +173,8 @@ export type SerializedBoard = {
   width: number;
   height: number;
   bombs: string;
+  opened: string;
+  flags: string;
 };
 
 export class Board {
@@ -210,6 +214,8 @@ export class Board {
     const board = new Board(game, boardData.width, boardData.height, options);
     for (let i = 0; i < board.totalTiles; i++) {
       board.tiles[i].hasBomb = boardData.bombs[i] === "1";
+      board.tiles[i].isOpen = boardData.opened[i] === "1";
+      board.tiles[i].isFlagged = boardData.flags[i] === "1";
     }
     board.plantPostActions();
     return board;
@@ -287,7 +293,9 @@ export class Board {
     return {
       width: this.width,
       height: this.height,
-      bombs: this.tiles.reduce((sum, tile) => sum + (tile.hasBomb ? "1" : "0"), ""),
+      bombs: arrayToBinary(this.tiles.map((tile) => tile.hasBomb)),
+      opened: arrayToBinary(this.tiles.map((tile) => tile.isOpen)),
+      flags: arrayToBinary(this.tiles.map((tile) => tile.isFlagged)),
     };
   }
 }
