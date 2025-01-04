@@ -59,14 +59,11 @@ class Tile {
   open() {
     if (this.board.isFrozen || this.isOpen || this.isFlagged) return;
     this.isOpen = true;
-    this.board.tileOpened(this.index);
-    saveBoardData(this.board.serializedData);
+    this.board.tileOpened(this);
+    this.board.saveBoardData();
     this.render();
     if (this.hasBomb) {
       return this.board.endGame(GameResult.GAME_OVER);
-    }
-    if (this.value === 0) {
-      this.neighbors.forEach((tile) => tile.open());
     }
   }
 
@@ -199,6 +196,8 @@ export class Board {
 
   firstTileClicked: boolean;
 
+  openPropagationInProgress: boolean;
+
   constructor(game: Game, width: number, height: number, options: BoardOptions = {}) {
     this.game = game;
     this.width = width;
@@ -225,6 +224,8 @@ export class Board {
     this.totalOpened = 0;
 
     this.firstTileClicked = false;
+
+    this.openPropagationInProgress = false;
   }
 
   static restore(game: Game, boardData: SerializedBoard, options: BoardOptions = {}): Board {
@@ -325,12 +326,30 @@ export class Board {
     return result;
   }
 
-  tileOpened(openedTileIndex: number) {
-    if (!this.firstTileClicked) this.plant(openedTileIndex);
+  propagateNeighbors(startingTile: Tile) {
+    const tilesToOpen = startingTile.neighbors;
+    while (tilesToOpen.length > 0) {
+      const tile = tilesToOpen.pop();
+      tile?.open();
+      if (tile?.value === 0)
+        tile?.neighbors.filter((neighbor) => !neighbor.isOpen).forEach((neighbor) => tilesToOpen.push(neighbor));
+    }
+  }
+
+  tileOpened(openedTile: Tile) {
+    if (!this.firstTileClicked) this.plant(openedTile.index);
     this.firstTileClicked = true;
     this.totalOpened += 1;
     if (this.totalOpened === this.totalTiles - this.plantedBombs) {
       this.endGame(GameResult.VICTORY);
+    }
+
+    if (!this.openPropagationInProgress && openedTile.value === 0) {
+      // open neighbors
+      this.openPropagationInProgress = true;
+      this.propagateNeighbors(openedTile);
+      this.openPropagationInProgress = false;
+      this.saveBoardData();
     }
   }
 
@@ -361,5 +380,9 @@ export class Board {
       opened: arrayToBinary(this.tiles.map((tile) => tile.isOpen)),
       flags: arrayToBinary(this.tiles.map((tile) => tile.isFlagged)),
     };
+  }
+
+  saveBoardData() {
+    if (!this.openPropagationInProgress) saveBoardData(this.serializedData);
   }
 }

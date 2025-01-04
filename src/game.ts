@@ -60,6 +60,7 @@ export class Game {
 
   startGame(width: number, height: number, bombs: number) {
     this.changeView(GameView.GAME);
+
     this.board = new Board(this, width, height);
 
     this.board.setBombs(bombs);
